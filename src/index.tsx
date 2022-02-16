@@ -3,10 +3,36 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { ApolloClient, ApolloLink, ApolloProvider, from, HttpLink, InMemoryCache } from '@apollo/client';
+
+const loggerLink = new ApolloLink((operation, forward) => {
+  function logFinish() {
+    console.log('Finished');
+  }
+
+  const observable = forward(operation);
+
+  // Comment the next line to see the desired behaviour
+  observable.subscribe({ error: logFinish, complete: logFinish });
+
+  return observable;
+});
+
+const apolloClient = new ApolloClient({
+  cache: new InMemoryCache(),
+  link: from([
+    loggerLink,
+    new HttpLink({ uri: 'https://rickandmortyapi.com/graphql' })
+  ]),
+  name: 'error-reproduce'
+});
+
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <ApolloProvider client={apolloClient}>
+      <App />
+    </ApolloProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
